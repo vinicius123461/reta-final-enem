@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { 
   Brain, 
   BookOpen, 
@@ -61,6 +61,41 @@ export default function RushIA() {
   });
   const [userPlan, setUserPlan] = useState(''); // 'individual' ou 'completo'
   const [isRegistering, setIsRegistering] = useState(false);
+
+  // Refs para manter foco nos inputs críticos
+  const resumoInputRef = useRef<HTMLInputElement>(null);
+  const nomeInputRef = useRef<HTMLInputElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const senhaInputRef = useRef<HTMLInputElement>(null);
+  const confirmarSenhaInputRef = useRef<HTMLInputElement>(null);
+  const loginEmailRef = useRef<HTMLInputElement>(null);
+  const loginSenhaRef = useRef<HTMLInputElement>(null);
+
+  // Handlers otimizados para evitar perda de foco
+  const handleResumoTemaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setResumoTema(e.target.value);
+  }, []);
+
+  const handleUserDataChange = useCallback((field: string, value: string) => {
+    setUserData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
+
+  const handleLoginDataChange = useCallback((field: string, value: string) => {
+    setLoginData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
+
+  const handlePlannerDataChange = useCallback((field: string, value: string) => {
+    setPlannerData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
 
   // Base de questões expandida com 10 questões do ENEM
   const questoesSimulado = [
@@ -698,11 +733,13 @@ export default function RushIA() {
           <div>
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Nome Completo *</label>
             <input 
+              ref={nomeInputRef}
               type="text"
               value={userData.nome}
-              onChange={(e) => setUserData({...userData, nome: e.target.value})}
-              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+              onChange={(e) => handleUserDataChange('nome', e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
               placeholder="Seu nome completo"
+              autoComplete="name"
               required
             />
           </div>
@@ -710,11 +747,13 @@ export default function RushIA() {
           <div>
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Email *</label>
             <input 
+              ref={emailInputRef}
               type="email"
               value={userData.email}
-              onChange={(e) => setUserData({...userData, email: e.target.value})}
-              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+              onChange={(e) => handleUserDataChange('email', e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
               placeholder="seu@email.com"
+              autoComplete="email"
               required
             />
           </div>
@@ -723,11 +762,13 @@ export default function RushIA() {
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Senha *</label>
             <div className="relative">
               <input 
+                ref={senhaInputRef}
                 type={showPassword ? "text" : "password"}
                 value={userData.senha}
-                onChange={(e) => setUserData({...userData, senha: e.target.value})}
-                className="w-full px-4 py-3 pr-12 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+                onChange={(e) => handleUserDataChange('senha', e.target.value)}
+                className="w-full px-4 py-3 pr-12 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
                 placeholder="Mínimo 6 caracteres"
+                autoComplete="new-password"
                 required
               />
               <button
@@ -744,11 +785,13 @@ export default function RushIA() {
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Confirmar Senha *</label>
             <div className="relative">
               <input 
+                ref={confirmarSenhaInputRef}
                 type={showConfirmPassword ? "text" : "password"}
                 value={userData.confirmarSenha}
-                onChange={(e) => setUserData({...userData, confirmarSenha: e.target.value})}
-                className="w-full px-4 py-3 pr-12 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+                onChange={(e) => handleUserDataChange('confirmarSenha', e.target.value)}
+                className="w-full px-4 py-3 pr-12 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
                 placeholder="Digite a senha novamente"
+                autoComplete="new-password"
                 required
               />
               <button
@@ -799,11 +842,13 @@ export default function RushIA() {
           <div>
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Email</label>
             <input 
+              ref={loginEmailRef}
               type="email"
               value={loginData.email}
-              onChange={(e) => setLoginData({...loginData, email: e.target.value})}
-              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+              onChange={(e) => handleLoginDataChange('email', e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
               placeholder="seu@email.com"
+              autoComplete="email"
               required
             />
           </div>
@@ -811,11 +856,13 @@ export default function RushIA() {
           <div>
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Senha</label>
             <input 
+              ref={loginSenhaRef}
               type="password"
               value={loginData.senha}
-              onChange={(e) => setLoginData({...loginData, senha: e.target.value})}
-              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+              onChange={(e) => handleLoginDataChange('senha', e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
               placeholder="••••••••"
+              autoComplete="current-password"
               required
             />
           </div>
@@ -1251,11 +1298,13 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
               </label>
               <div className="mb-4">
                 <input 
+                  ref={resumoInputRef}
                   type="text"
                   value={resumoTema}
-                  onChange={(e) => setResumoTema(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+                  onChange={handleResumoTemaChange}
+                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
                   placeholder="Ex: Revolução Francesa, Funções Quadráticas, Genética..."
+                  autoComplete="off"
                 />
               </div>
 
@@ -1432,8 +1481,8 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
                 </label>
                 <select 
                   value={plannerData.tempoDisponivel}
-                  onChange={(e) => setPlannerData({...plannerData, tempoDisponivel: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+                  onChange={(e) => handlePlannerDataChange('tempoDisponivel', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
                 >
                   <option value="">Selecione...</option>
                   <option value="1-2h">1-2 horas</option>
@@ -1450,8 +1499,8 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
                 </label>
                 <select 
                   value={plannerData.horarioPreferido}
-                  onChange={(e) => setPlannerData({...plannerData, horarioPreferido: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+                  onChange={(e) => handlePlannerDataChange('horarioPreferido', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
                 >
                   <option value="">Selecione...</option>
                   <option value="manha">Manhã (6h-12h)</option>
@@ -1468,8 +1517,8 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
                 </label>
                 <select 
                   value={plannerData.metaEnem}
-                  onChange={(e) => setPlannerData({...plannerData, metaEnem: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+                  onChange={(e) => handlePlannerDataChange('metaEnem', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
                 >
                   <option value="">Selecione...</option>
                   <option value="500-600">500-600 pontos</option>
@@ -1487,9 +1536,10 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
                 <input 
                   type="text"
                   value={plannerData.materiasPreferidas}
-                  onChange={(e) => setPlannerData({...plannerData, materiasPreferidas: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+                  onChange={(e) => handlePlannerDataChange('materiasPreferidas', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
                   placeholder="Ex: Matemática, História, Português..."
+                  autoComplete="off"
                 />
               </div>
 
@@ -1499,8 +1549,8 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
                 </label>
                 <textarea 
                   value={plannerData.dificuldades}
-                  onChange={(e) => setPlannerData({...plannerData, dificuldades: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors h-20 resize-none"
+                  onChange={(e) => handlePlannerDataChange('dificuldades', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors h-20 resize-none bg-white"
                   placeholder="Ex: Física, Redação, Interpretação de texto..."
                 />
               </div>
@@ -1511,8 +1561,8 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
                 </label>
                 <select 
                   value={plannerData.experienciaAnterior}
-                  onChange={(e) => setPlannerData({...plannerData, experienciaAnterior: e.target.value})}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+                  onChange={(e) => handlePlannerDataChange('experienciaAnterior', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
                 >
                   <option value="">Selecione...</option>
                   <option value="primeira-vez">Primeira vez</option>
@@ -1651,7 +1701,7 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
               {userPlan !== 'completo' && (
                 <button 
                   onClick={() => setUserPlan('completo')}
-                  className="w-full bg-gradient-to-r from-[#87CEEB] to-[#4682B4] text-white py-3 rounded-2xl font-semibold hover:shadow-lg transition-all duration-300"
+                  className="bg-gradient-to-r from-[#87CEEB] to-[#4682B4] text-white py-3 rounded-2xl font-semibold hover:shadow-lg transition-all duration-300 w-full"
                 >
                   Selecionar Completo
                 </button>
