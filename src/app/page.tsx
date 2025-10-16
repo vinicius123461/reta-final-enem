@@ -20,7 +20,9 @@ import {
   X,
   Home,
   Settings,
-  LogOut
+  LogOut,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export default function RushIA() {
@@ -43,6 +45,22 @@ export default function RushIA() {
   });
   const [cronogramaGerado, setCronogramaGerado] = useState(false);
   const [errosSimulado, setErrosSimulado] = useState<{questao: number, materia: string, assunto: string}[]>([]);
+  
+  // Estados para sistema de autenticação
+  const [userData, setUserData] = useState({
+    nome: '',
+    email: '',
+    senha: '',
+    confirmarSenha: ''
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loginData, setLoginData] = useState({
+    email: '',
+    senha: ''
+  });
+  const [userPlan, setUserPlan] = useState(''); // 'individual' ou 'completo'
+  const [isRegistering, setIsRegistering] = useState(false);
 
   // Base de questões expandida com 10 questões do ENEM
   const questoesSimulado = [
@@ -191,6 +209,88 @@ export default function RushIA() {
     return motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
   };
 
+  // Função para validar email
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Função para validar senha
+  const isValidPassword = (password: string) => {
+    return password.length >= 6;
+  };
+
+  // Função para realizar cadastro
+  const handleRegister = () => {
+    if (!userData.nome.trim()) {
+      alert('Por favor, digite seu nome completo.');
+      return;
+    }
+    
+    if (!isValidEmail(userData.email)) {
+      alert('Por favor, digite um email válido.');
+      return;
+    }
+    
+    if (!isValidPassword(userData.senha)) {
+      alert('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    
+    if (userData.senha !== userData.confirmarSenha) {
+      alert('As senhas não coincidem.');
+      return;
+    }
+
+    // Simular cadastro (em produção, seria uma chamada para API)
+    localStorage.setItem('rushia_user', JSON.stringify({
+      nome: userData.nome,
+      email: userData.email,
+      senha: userData.senha, // Em produção, seria hash
+      plano: userPlan,
+      dataRegistro: new Date().toISOString()
+    }));
+
+    alert('Cadastro realizado com sucesso! Redirecionando para o pagamento...');
+    setCurrentView('payment');
+  };
+
+  // Função para realizar login
+  const handleLogin = () => {
+    if (!isValidEmail(loginData.email)) {
+      alert('Por favor, digite um email válido.');
+      return;
+    }
+    
+    if (!loginData.senha) {
+      alert('Por favor, digite sua senha.');
+      return;
+    }
+
+    // Simular verificação de login (em produção, seria uma chamada para API)
+    const storedUser = localStorage.getItem('rushia_user');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      if (user.email === loginData.email && user.senha === loginData.senha) {
+        setIsLoggedIn(true);
+        setUserPlan(user.plano);
+        setCurrentView('home');
+        alert(`Bem-vindo de volta, ${user.nome}!`);
+        return;
+      }
+    }
+    
+    alert('Email ou senha incorretos.');
+  };
+
+  // Função para logout
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUserPlan('');
+    setCurrentView('home');
+    setLoginData({ email: '', senha: '' });
+  };
+
   // Função para gerar resumo dos erros
   const gerarResumoErros = () => {
     if (errosSimulado.length === 0) {
@@ -280,7 +380,7 @@ export default function RushIA() {
                   Planejador
                 </button>
                 <button 
-                  onClick={() => setIsLoggedIn(false)}
+                  onClick={handleLogout}
                   className="p-2 text-[#6B7280] hover:text-[#2C3E50] hover:bg-[#F5F5DC] rounded-full transition-all"
                 >
                   <LogOut className="w-4 h-4" />
@@ -387,7 +487,7 @@ export default function RushIA() {
           {!isLoggedIn && (
             <div className="mb-12">
               <button 
-                onClick={() => setCurrentView('payment')}
+                onClick={() => setCurrentView('register')}
                 className="bg-gradient-to-r from-[#87CEEB] to-[#4682B4] text-white px-10 py-5 rounded-2xl text-xl font-bold hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
               >
                 Começar Agora com Rush.IA
@@ -469,7 +569,10 @@ export default function RushIA() {
                 </li>
               </ul>
               <button 
-                onClick={() => window.open('https://pay.cakto.com.br/34ydmtc_604917', '_blank')}
+                onClick={() => {
+                  setUserPlan('individual');
+                  setCurrentView('register');
+                }}
                 className="w-full bg-white text-[#4682B4] py-4 rounded-2xl font-bold hover:bg-gray-100 transition-colors text-lg"
               >
                 Escolher Sala Individual
@@ -506,7 +609,10 @@ export default function RushIA() {
                 </li>
               </ul>
               <button 
-                onClick={() => window.open('https://pay.cakto.com.br/34rcs4r_604884', '_blank')}
+                onClick={() => {
+                  setUserPlan('completo');
+                  setCurrentView('register');
+                }}
                 className="w-full bg-[#FFD700] text-[#2C3E50] py-4 rounded-2xl font-bold hover:bg-[#FFC700] transition-colors text-lg"
               >
                 Começar Acesso Completo
@@ -519,7 +625,7 @@ export default function RushIA() {
         <div className="grid md:grid-cols-3 gap-6">
           <div 
             className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 border border-[#E8F4FD]"
-            onClick={() => isLoggedIn ? setCurrentView('simulados') : setCurrentView('payment')}
+            onClick={() => isLoggedIn ? setCurrentView('simulados') : setCurrentView('register')}
           >
             <div className="w-12 h-12 bg-gradient-to-br from-[#87CEEB] to-[#4682B4] rounded-xl flex items-center justify-center mb-4">
               <Brain className="w-6 h-6 text-white" />
@@ -537,7 +643,7 @@ export default function RushIA() {
 
           <div 
             className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 border border-[#E8F4FD]"
-            onClick={() => isLoggedIn ? setCurrentView('resumos') : setCurrentView('payment')}
+            onClick={() => isLoggedIn ? setCurrentView('resumos') : setCurrentView('register')}
           >
             <div className="w-12 h-12 bg-gradient-to-br from-[#FFD700] to-[#FFA500] rounded-xl flex items-center justify-center mb-4">
               <BookOpen className="w-6 h-6 text-white" />
@@ -555,14 +661,14 @@ export default function RushIA() {
 
           <div 
             className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 border border-[#E8F4FD]"
-            onClick={() => isLoggedIn ? setCurrentView('planejador') : setCurrentView('payment')}
+            onClick={() => isLoggedIn ? setCurrentView('planejador') : setCurrentView('register')}
           >
             <div className="w-12 h-12 bg-gradient-to-br from-[#32CD32] to-[#228B22] rounded-xl flex items-center justify-center mb-4">
               <Calendar className="w-6 h-6 text-white" />
             </div>
             <h3 className="text-xl font-bold text-[#2C3E50] mb-3">Planejador Relâmpago</h3>
             <p className="text-[#6B7280] mb-4 text-sm">
-              3 perguntas rápidas e a IA monta seu cronograma de 40 dias. 
+              6 perguntas rápidas e a IA monta seu cronograma de 40 dias. 
               Equilibrado, realista e focado no que realmente importa!
             </p>
             <div className="flex items-center text-[#4682B4] font-semibold text-sm">
@@ -575,6 +681,109 @@ export default function RushIA() {
     </div>
   );
 
+  const RegisterView = () => (
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#F8FFFE] to-[#E8F4FD] flex items-center justify-center px-4 pb-20 md:pb-0">
+      <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl max-w-md w-full border border-[#E8F4FD]">
+        <div className="text-center mb-6">
+          <div className="w-14 h-14 bg-gradient-to-br from-[#87CEEB] to-[#4682B4] rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <User className="w-7 h-7 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-[#2C3E50] mb-2">Criar Conta Rush.IA</h2>
+          <p className="text-[#6B7280] text-sm">
+            {userPlan === 'individual' ? 'Plano Individual selecionado' : 'Plano Completo selecionado'}
+          </p>
+        </div>
+
+        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
+          <div>
+            <label className="block text-sm font-medium text-[#2C3E50] mb-2">Nome Completo *</label>
+            <input 
+              type="text"
+              value={userData.nome}
+              onChange={(e) => setUserData({...userData, nome: e.target.value})}
+              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+              placeholder="Seu nome completo"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-[#2C3E50] mb-2">Email *</label>
+            <input 
+              type="email"
+              value={userData.email}
+              onChange={(e) => setUserData({...userData, email: e.target.value})}
+              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+              placeholder="seu@email.com"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#2C3E50] mb-2">Senha *</label>
+            <div className="relative">
+              <input 
+                type={showPassword ? "text" : "password"}
+                value={userData.senha}
+                onChange={(e) => setUserData({...userData, senha: e.target.value})}
+                className="w-full px-4 py-3 pr-12 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+                placeholder="Mínimo 6 caracteres"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6B7280] hover:text-[#2C3E50]"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#2C3E50] mb-2">Confirmar Senha *</label>
+            <div className="relative">
+              <input 
+                type={showConfirmPassword ? "text" : "password"}
+                value={userData.confirmarSenha}
+                onChange={(e) => setUserData({...userData, confirmarSenha: e.target.value})}
+                className="w-full px-4 py-3 pr-12 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
+                placeholder="Digite a senha novamente"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6B7280] hover:text-[#2C3E50]"
+              >
+                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          <button 
+            type="submit"
+            className="w-full bg-gradient-to-r from-[#87CEEB] to-[#4682B4] text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+          >
+            Criar Conta e Continuar
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-xs text-[#6B7280] mb-3">
+            Já tem uma conta?
+          </p>
+          <button 
+            onClick={() => setCurrentView('login')}
+            className="text-[#4682B4] font-semibold text-sm hover:underline"
+          >
+            Fazer Login
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   const LoginView = () => (
     <div className="min-h-screen bg-gradient-to-br from-white via-[#F8FFFE] to-[#E8F4FD] flex items-center justify-center px-4 pb-20 md:pb-0">
       <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl max-w-md w-full border border-[#E8F4FD]">
@@ -582,17 +791,20 @@ export default function RushIA() {
           <div className="w-14 h-14 bg-gradient-to-br from-[#87CEEB] to-[#4682B4] rounded-2xl flex items-center justify-center mx-auto mb-4">
             <User className="w-7 h-7 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-[#2C3E50] mb-2">Bem-vindo à Rush.IA!</h2>
-          <p className="text-[#6B7280] text-sm">Entre com seu token de acesso</p>
+          <h2 className="text-2xl font-bold text-[#2C3E50] mb-2">Bem-vindo de volta!</h2>
+          <p className="text-[#6B7280] text-sm">Entre com suas credenciais</p>
         </div>
 
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
           <div>
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Email</label>
             <input 
               type="email"
+              value={loginData.email}
+              onChange={(e) => setLoginData({...loginData, email: e.target.value})}
               className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
               placeholder="seu@email.com"
+              required
             />
           </div>
           
@@ -600,20 +812,19 @@ export default function RushIA() {
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Senha</label>
             <input 
               type="password"
+              value={loginData.senha}
+              onChange={(e) => setLoginData({...loginData, senha: e.target.value})}
               className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors"
               placeholder="••••••••"
+              required
             />
           </div>
 
           <button 
-            type="button"
-            onClick={() => {
-              setIsLoggedIn(true);
-              setCurrentView('home');
-            }}
+            type="submit"
             className="w-full bg-gradient-to-r from-[#87CEEB] to-[#4682B4] text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
           >
-            Acessar Rush.IA
+            Entrar na Rush.IA
           </button>
         </form>
 
@@ -622,10 +833,10 @@ export default function RushIA() {
             Ainda não tem acesso? Escolha seu plano:
           </p>
           <button 
-            onClick={() => setCurrentView('payment')}
+            onClick={() => setCurrentView('register')}
             className="text-[#4682B4] font-semibold text-sm hover:underline"
           >
-            Ver Planos Rush.IA
+            Criar Conta Rush.IA
           </button>
         </div>
       </div>
@@ -1354,83 +1565,125 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
               <CreditCard className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-[#2C3E50] mb-4">
-              Escolha seu Plano Rush.IA
+              Finalizar Assinatura Rush.IA
             </h2>
             <p className="text-base text-[#6B7280]">
-              Invista no seu futuro. Você merece conquistar seus sonhos!
+              {userPlan === 'individual' ? 'Plano Individual selecionado' : 'Plano Completo selecionado'}
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-white rounded-2xl p-6 shadow-lg border-2 border-[#E8F4FD]">
-              <h3 className="text-xl font-bold text-[#2C3E50] mb-3">Acesso Individual</h3>
-              <div className="text-3xl font-bold text-[#4682B4] mb-4">
+            <div className={`rounded-2xl p-6 shadow-lg border-2 ${
+              userPlan === 'individual' 
+                ? 'bg-gradient-to-br from-[#87CEEB] to-[#4682B4] text-white border-[#4682B4]' 
+                : 'bg-white border-[#E8F4FD]'
+            }`}>
+              <h3 className={`text-xl font-bold mb-3 ${userPlan === 'individual' ? 'text-white' : 'text-[#2C3E50]'}`}>
+                Acesso Individual
+              </h3>
+              <div className={`text-3xl font-bold mb-4 ${userPlan === 'individual' ? 'text-white' : 'text-[#4682B4]'}`}>
                 R$ 29,90
-                <span className="text-base font-normal text-[#6B7280]">/sala</span>
+                <span className={`text-base font-normal ${userPlan === 'individual' ? 'text-white opacity-80' : 'text-[#6B7280]'}`}>
+                  /sala
+                </span>
               </div>
               <ul className="space-y-2 mb-6 text-sm">
                 <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-[#32CD32] mr-2" />
+                  <CheckCircle className={`w-4 h-4 mr-2 ${userPlan === 'individual' ? 'text-[#FFD700]' : 'text-[#32CD32]'}`} />
                   <span>Acesso a uma sala por 30 dias</span>
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-[#32CD32] mr-2" />
+                  <CheckCircle className={`w-4 h-4 mr-2 ${userPlan === 'individual' ? 'text-[#FFD700]' : 'text-[#32CD32]'}`} />
                   <span>Uso ilimitado da funcionalidade</span>
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-[#32CD32] mr-2" />
+                  <CheckCircle className={`w-4 h-4 mr-2 ${userPlan === 'individual' ? 'text-[#FFD700]' : 'text-[#32CD32]'}`} />
                   <span>Suporte por email</span>
                 </li>
               </ul>
-              <button 
-                onClick={() => window.open('https://pay.cakto.com.br/34ydmtc_604917', '_blank')}
-                className="w-full bg-[#F5F5DC] text-[#2C3E50] py-3 rounded-2xl font-semibold hover:bg-[#E6E6D3] transition-colors"
-              >
-                Assinar Individual
-              </button>
+              {userPlan !== 'individual' && (
+                <button 
+                  onClick={() => setUserPlan('individual')}
+                  className="w-full bg-[#F5F5DC] text-[#2C3E50] py-3 rounded-2xl font-semibold hover:bg-[#E6E6D3] transition-colors"
+                >
+                  Selecionar Individual
+                </button>
+              )}
             </div>
 
-            <div className="bg-gradient-to-br from-[#87CEEB] to-[#4682B4] rounded-2xl p-6 shadow-xl text-white relative">
+            <div className={`rounded-2xl p-6 shadow-xl relative ${
+              userPlan === 'completo' 
+                ? 'bg-gradient-to-br from-[#87CEEB] to-[#4682B4] text-white border-2 border-[#FFD700]' 
+                : 'bg-white border-2 border-[#E8F4FD]'
+            }`}>
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                 <span className="bg-[#FFD700] text-[#2C3E50] px-3 py-1 rounded-full text-xs font-bold">
                   RECOMENDADO
                 </span>
               </div>
-              <h3 className="text-xl font-bold mb-3">Acesso Completo</h3>
-              <div className="text-3xl font-bold mb-4">
+              <h3 className={`text-xl font-bold mb-3 ${userPlan === 'completo' ? 'text-white' : 'text-[#2C3E50]'}`}>
+                Acesso Completo
+              </h3>
+              <div className={`text-3xl font-bold mb-4 ${userPlan === 'completo' ? 'text-white' : 'text-[#4682B4]'}`}>
                 R$ 59,90
-                <span className="text-base font-normal opacity-80">/mês</span>
+                <span className={`text-base font-normal ${userPlan === 'completo' ? 'text-white opacity-80' : 'text-[#6B7280]'}`}>
+                  /mês
+                </span>
               </div>
               <ul className="space-y-2 mb-6 text-sm">
                 <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-[#FFD700] mr-2" />
+                  <CheckCircle className={`w-4 h-4 mr-2 ${userPlan === 'completo' ? 'text-[#FFD700]' : 'text-[#32CD32]'}`} />
                   <span>Acesso às 3 salas por 30 dias</span>
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-[#FFD700] mr-2" />
+                  <CheckCircle className={`w-4 h-4 mr-2 ${userPlan === 'completo' ? 'text-[#FFD700]' : 'text-[#32CD32]'}`} />
                   <span>Uso ilimitado de tudo</span>
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-[#FFD700] mr-2" />
+                  <CheckCircle className={`w-4 h-4 mr-2 ${userPlan === 'completo' ? 'text-[#FFD700]' : 'text-[#32CD32]'}`} />
                   <span>Suporte prioritário</span>
                 </li>
                 <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-[#FFD700] mr-2" />
+                  <CheckCircle className={`w-4 h-4 mr-2 ${userPlan === 'completo' ? 'text-[#FFD700]' : 'text-[#32CD32]'}`} />
                   <span>Relatórios de progresso</span>
                 </li>
               </ul>
-              <button 
-                onClick={() => window.open('https://pay.cakto.com.br/34rcs4r_604884', '_blank')}
-                className="w-full bg-white text-[#4682B4] py-3 rounded-2xl font-semibold hover:bg-gray-100 transition-colors"
-              >
-                Assinar Completo
-              </button>
+              {userPlan !== 'completo' && (
+                <button 
+                  onClick={() => setUserPlan('completo')}
+                  className="w-full bg-gradient-to-r from-[#87CEEB] to-[#4682B4] text-white py-3 rounded-2xl font-semibold hover:shadow-lg transition-all duration-300"
+                >
+                  Selecionar Completo
+                </button>
+              )}
             </div>
           </div>
 
+          <div className="text-center mb-6">
+            <button 
+              onClick={() => {
+                const paymentUrl = userPlan === 'individual' 
+                  ? 'https://pay.cakto.com.br/34ydmtc_604917'
+                  : 'https://pay.cakto.com.br/34rcs4r_604884';
+                
+                // Simular pagamento bem-sucedido após redirecionamento
+                setTimeout(() => {
+                  setIsLoggedIn(true);
+                  setCurrentView('home');
+                  alert('Pagamento confirmado! Bem-vindo à Rush.IA!');
+                }, 2000);
+                
+                window.open(paymentUrl, '_blank');
+              }}
+              className="bg-gradient-to-r from-[#32CD32] to-[#228B22] text-white px-8 py-4 rounded-2xl text-lg font-semibold hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            >
+              Finalizar Pagamento - {userPlan === 'individual' ? 'R$ 29,90' : 'R$ 59,90'}
+            </button>
+          </div>
+
           <div className="bg-gradient-to-r from-[#32CD32] to-[#228B22] rounded-2xl p-4 text-white text-center">
-            <h3 className="text-lg font-bold mb-2">🎉 Você acaba de entrar no grupo dos que acreditam que ainda dá tempo — e estão certos!</h3>
-            <p className="text-sm">Bem-vindo à sua jornada de sucesso com Rush.IA!</p>
+            <h3 className="text-lg font-bold mb-2">🎉 Você está a um clique do sucesso!</h3>
+            <p className="text-sm">Após o pagamento, você terá acesso imediato à plataforma Rush.IA!</p>
           </div>
         </div>
       </div>
@@ -1493,6 +1746,7 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
       <Header />
       
       {currentView === 'home' && <HomeView />}
+      {currentView === 'register' && <RegisterView />}
       {currentView === 'login' && <LoginView />}
       {currentView === 'simulados' && <SimuladosView />}
       {currentView === 'resumos' && <ResumosView />}
