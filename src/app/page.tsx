@@ -24,6 +24,8 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
+import { SecureInput } from '@/components/ui/SecureInput';
+import { SecureTextarea } from '@/components/ui/SecureTextarea';
 
 export default function RushIA() {
   const [currentView, setCurrentView] = useState('home');
@@ -46,7 +48,7 @@ export default function RushIA() {
   const [cronogramaGerado, setCronogramaGerado] = useState(false);
   const [errosSimulado, setErrosSimulado] = useState<{questao: number, materia: string, assunto: string}[]>([]);
   
-  // Estados para sistema de autenticação
+  // Estados para sistema de autenticação com janela de digitação segura
   const [userData, setUserData] = useState({
     nome: '',
     email: '',
@@ -71,9 +73,9 @@ export default function RushIA() {
   const loginEmailRef = useRef<HTMLInputElement>(null);
   const loginSenhaRef = useRef<HTMLInputElement>(null);
 
-  // Handlers otimizados para evitar perda de foco
-  const handleResumoTemaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setResumoTema(e.target.value);
+  // Handlers otimizados com janela de digitação segura
+  const handleResumoTemaChange = useCallback((value: string) => {
+    setResumoTema(value);
   }, []);
 
   const handleUserDataChange = useCallback((field: string, value: string) => {
@@ -95,6 +97,13 @@ export default function RushIA() {
       ...prev,
       [field]: value
     }));
+  }, []);
+
+  // Função para processar dados após janela de digitação segura
+  const processSecureData = useCallback((field: string, value: string) => {
+    console.log(`Processando campo ${field} com valor:`, value);
+    // Aqui seria onde os dados seriam enviados para o banco de dados
+    // Por enquanto, apenas armazenamos localmente
   }, []);
 
   // Base de questões expandida com 10 questões do ENEM
@@ -255,7 +264,7 @@ export default function RushIA() {
     return password.length >= 6;
   };
 
-  // Função para realizar cadastro
+  // Função para realizar cadastro com dados seguros
   const handleRegister = () => {
     if (!userData.nome.trim()) {
       alert('Por favor, digite seu nome completo.');
@@ -732,12 +741,11 @@ export default function RushIA() {
         <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
           <div>
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Nome Completo *</label>
-            <input 
+            <SecureInput 
               ref={nomeInputRef}
-              type="text"
               value={userData.nome}
-              onChange={(e) => handleUserDataChange('nome', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+              onValueChange={(value) => handleUserDataChange('nome', value)}
+              onCommit={(value) => processSecureData('nome', value)}
               placeholder="Seu nome completo"
               autoComplete="name"
               required
@@ -746,12 +754,13 @@ export default function RushIA() {
           
           <div>
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Email *</label>
-            <input 
+            <SecureInput 
               ref={emailInputRef}
               type="email"
               value={userData.email}
-              onChange={(e) => handleUserDataChange('email', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+              onValueChange={(value) => handleUserDataChange('email', value)}
+              onCommit={(value) => processSecureData('email', value)}
+              onValidate={isValidEmail}
               placeholder="seu@email.com"
               autoComplete="email"
               required
@@ -761,20 +770,22 @@ export default function RushIA() {
           <div>
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Senha *</label>
             <div className="relative">
-              <input 
+              <SecureInput 
                 ref={senhaInputRef}
                 type={showPassword ? "text" : "password"}
                 value={userData.senha}
-                onChange={(e) => handleUserDataChange('senha', e.target.value)}
-                className="w-full px-4 py-3 pr-12 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+                onValueChange={(value) => handleUserDataChange('senha', value)}
+                onCommit={(value) => processSecureData('senha', value)}
+                onValidate={isValidPassword}
                 placeholder="Mínimo 6 caracteres"
                 autoComplete="new-password"
+                className="pr-12"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6B7280] hover:text-[#2C3E50]"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6B7280] hover:text-[#2C3E50] z-10"
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -784,20 +795,22 @@ export default function RushIA() {
           <div>
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Confirmar Senha *</label>
             <div className="relative">
-              <input 
+              <SecureInput 
                 ref={confirmarSenhaInputRef}
                 type={showConfirmPassword ? "text" : "password"}
                 value={userData.confirmarSenha}
-                onChange={(e) => handleUserDataChange('confirmarSenha', e.target.value)}
-                className="w-full px-4 py-3 pr-12 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+                onValueChange={(value) => handleUserDataChange('confirmarSenha', value)}
+                onCommit={(value) => processSecureData('confirmarSenha', value)}
+                onValidate={(value) => value === userData.senha}
                 placeholder="Digite a senha novamente"
                 autoComplete="new-password"
+                className="pr-12"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6B7280] hover:text-[#2C3E50]"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6B7280] hover:text-[#2C3E50] z-10"
               >
                 {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -841,12 +854,13 @@ export default function RushIA() {
         <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
           <div>
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Email</label>
-            <input 
+            <SecureInput 
               ref={loginEmailRef}
               type="email"
               value={loginData.email}
-              onChange={(e) => handleLoginDataChange('email', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+              onValueChange={(value) => handleLoginDataChange('email', value)}
+              onCommit={(value) => processSecureData('loginEmail', value)}
+              onValidate={isValidEmail}
               placeholder="seu@email.com"
               autoComplete="email"
               required
@@ -855,12 +869,12 @@ export default function RushIA() {
           
           <div>
             <label className="block text-sm font-medium text-[#2C3E50] mb-2">Senha</label>
-            <input 
+            <SecureInput 
               ref={loginSenhaRef}
               type="password"
               value={loginData.senha}
-              onChange={(e) => handleLoginDataChange('senha', e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+              onValueChange={(value) => handleLoginDataChange('senha', value)}
+              onCommit={(value) => processSecureData('loginSenha', value)}
               placeholder="••••••••"
               autoComplete="current-password"
               required
@@ -1297,14 +1311,12 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
                 Qual tema você quer dominar hoje?
               </label>
               <div className="mb-4">
-                <input 
+                <SecureInput 
                   ref={resumoInputRef}
-                  type="text"
                   value={resumoTema}
-                  onChange={handleResumoTemaChange}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+                  onValueChange={handleResumoTemaChange}
+                  onCommit={(value) => processSecureData('resumoTema', value)}
                   placeholder="Ex: Revolução Francesa, Funções Quadráticas, Genética..."
-                  autoComplete="off"
                 />
               </div>
 
@@ -1533,13 +1545,11 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
                 <label className="block text-sm font-medium text-[#2C3E50] mb-2">
                   4. Quais são suas matérias preferidas?
                 </label>
-                <input 
-                  type="text"
+                <SecureInput 
                   value={plannerData.materiasPreferidas}
-                  onChange={(e) => handlePlannerDataChange('materiasPreferidas', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+                  onValueChange={(value) => handlePlannerDataChange('materiasPreferidas', value)}
+                  onCommit={(value) => processSecureData('materiasPreferidas', value)}
                   placeholder="Ex: Matemática, História, Português..."
-                  autoComplete="off"
                 />
               </div>
 
@@ -1547,10 +1557,11 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
                 <label className="block text-sm font-medium text-[#2C3E50] mb-2">
                   5. Quais são suas maiores dificuldades?
                 </label>
-                <textarea 
+                <SecureTextarea 
                   value={plannerData.dificuldades}
-                  onChange={(e) => handlePlannerDataChange('dificuldades', e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors h-20 resize-none bg-white"
+                  onValueChange={(value) => handlePlannerDataChange('dificuldades', value)}
+                  onCommit={(value) => processSecureData('dificuldades', value)}
+                  className="h-20"
                   placeholder="Ex: Física, Redação, Interpretação de texto..."
                 />
               </div>
