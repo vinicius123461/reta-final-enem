@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { 
   Brain, 
   BookOpen, 
@@ -24,8 +24,6 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { SecureInput } from '@/components/ui/SecureInput';
-import { SecureTextarea } from '@/components/ui/SecureTextarea';
 
 export default function RushIA() {
   const [currentView, setCurrentView] = useState('home');
@@ -48,48 +46,14 @@ export default function RushIA() {
   const [cronogramaGerado, setCronogramaGerado] = useState(false);
   const [errosSimulado, setErrosSimulado] = useState<{questao: number, materia: string, assunto: string}[]>([]);
   
-  // Estados para sistema de autenticação com janela de digitação segura
-  const [userData, setUserData] = useState({
-    nome: '',
-    email: '',
-    senha: '',
-    confirmarSenha: ''
-  });
+  // Estados para sistema de autenticação
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loginData, setLoginData] = useState({
-    email: '',
-    senha: ''
-  });
   const [userPlan, setUserPlan] = useState(''); // 'individual' ou 'completo'
-  const [isRegistering, setIsRegistering] = useState(false);
 
-  // Refs para manter foco nos inputs críticos
-  const resumoInputRef = useRef<HTMLInputElement>(null);
-  const nomeInputRef = useRef<HTMLInputElement>(null);
-  const emailInputRef = useRef<HTMLInputElement>(null);
-  const senhaInputRef = useRef<HTMLInputElement>(null);
-  const confirmarSenhaInputRef = useRef<HTMLInputElement>(null);
-  const loginEmailRef = useRef<HTMLInputElement>(null);
-  const loginSenhaRef = useRef<HTMLInputElement>(null);
-
-  // Handlers otimizados com janela de digitação segura
-  const handleResumoTemaChange = useCallback((value: string) => {
-    setResumoTema(value);
-  }, []);
-
-  const handleUserDataChange = useCallback((field: string, value: string) => {
-    setUserData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  }, []);
-
-  const handleLoginDataChange = useCallback((field: string, value: string) => {
-    setLoginData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  // Handlers otimizados com useCallback para evitar re-renders desnecessários
+  const handleResumoTemaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setResumoTema(e.target.value);
   }, []);
 
   const handlePlannerDataChange = useCallback((field: string, value: string) => {
@@ -97,13 +61,6 @@ export default function RushIA() {
       ...prev,
       [field]: value
     }));
-  }, []);
-
-  // Função para processar dados após janela de digitação segura
-  const processSecureData = useCallback((field: string, value: string) => {
-    console.log(`Processando campo ${field} com valor:`, value);
-    // Aqui seria onde os dados seriam enviados para o banco de dados
-    // Por enquanto, apenas armazenamos localmente
   }, []);
 
   // Base de questões expandida com 10 questões do ENEM
@@ -264,75 +221,11 @@ export default function RushIA() {
     return password.length >= 6;
   };
 
-  // Função para realizar cadastro com dados seguros
-  const handleRegister = () => {
-    if (!userData.nome.trim()) {
-      alert('Por favor, digite seu nome completo.');
-      return;
-    }
-    
-    if (!isValidEmail(userData.email)) {
-      alert('Por favor, digite um email válido.');
-      return;
-    }
-    
-    if (!isValidPassword(userData.senha)) {
-      alert('A senha deve ter pelo menos 6 caracteres.');
-      return;
-    }
-    
-    if (userData.senha !== userData.confirmarSenha) {
-      alert('As senhas não coincidem.');
-      return;
-    }
-
-    // Simular cadastro (em produção, seria uma chamada para API)
-    localStorage.setItem('rushia_user', JSON.stringify({
-      nome: userData.nome,
-      email: userData.email,
-      senha: userData.senha, // Em produção, seria hash
-      plano: userPlan,
-      dataRegistro: new Date().toISOString()
-    }));
-
-    alert('Cadastro realizado com sucesso! Redirecionando para o pagamento...');
-    setCurrentView('payment');
-  };
-
-  // Função para realizar login
-  const handleLogin = () => {
-    if (!isValidEmail(loginData.email)) {
-      alert('Por favor, digite um email válido.');
-      return;
-    }
-    
-    if (!loginData.senha) {
-      alert('Por favor, digite sua senha.');
-      return;
-    }
-
-    // Simular verificação de login (em produção, seria uma chamada para API)
-    const storedUser = localStorage.getItem('rushia_user');
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      if (user.email === loginData.email && user.senha === loginData.senha) {
-        setIsLoggedIn(true);
-        setUserPlan(user.plano);
-        setCurrentView('home');
-        alert(`Bem-vindo de volta, ${user.nome}!`);
-        return;
-      }
-    }
-    
-    alert('Email ou senha incorretos.');
-  };
-
   // Função para logout
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserPlan('');
     setCurrentView('home');
-    setLoginData({ email: '', senha: '' });
   };
 
   // Função para gerar resumo dos erros
@@ -725,184 +618,297 @@ export default function RushIA() {
     </div>
   );
 
-  const RegisterView = () => (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#F8FFFE] to-[#E8F4FD] flex items-center justify-center px-4 pb-20 md:pb-0">
-      <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl max-w-md w-full border border-[#E8F4FD]">
-        <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-gradient-to-br from-[#87CEEB] to-[#4682B4] rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <User className="w-7 h-7 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-[#2C3E50] mb-2">Criar Conta Rush.IA</h2>
-          <p className="text-[#6B7280] text-sm">
-            {userPlan === 'individual' ? 'Plano Individual selecionado' : 'Plano Completo selecionado'}
-          </p>
-        </div>
+  const RegisterView = () => {
+    // Estado local isolado para o formulário de cadastro
+    const [registerForm, setRegisterForm] = useState({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
 
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
-          <div>
-            <label className="block text-sm font-medium text-[#2C3E50] mb-2">Nome Completo *</label>
-            <SecureInput 
-              ref={nomeInputRef}
-              value={userData.nome}
-              onValueChange={(value) => handleUserDataChange('nome', value)}
-              onCommit={(value) => processSecureData('nome', value)}
-              placeholder="Seu nome completo"
-              autoComplete="name"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-[#2C3E50] mb-2">Email *</label>
-            <SecureInput 
-              ref={emailInputRef}
-              type="email"
-              value={userData.email}
-              onValueChange={(value) => handleUserDataChange('email', value)}
-              onCommit={(value) => processSecureData('email', value)}
-              onValidate={isValidEmail}
-              placeholder="seu@email.com"
-              autoComplete="email"
-              required
-            />
+    // Handler para mudanças nos inputs - sem dependências externas
+    const handleRegisterInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setRegisterForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    };
+
+    // Handler para submit do formulário - APENAS aqui o Supabase seria chamado
+    const handleRegisterSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      // Validações locais
+      if (!registerForm.name.trim()) {
+        alert('Por favor, digite seu nome completo.');
+        return;
+      }
+      
+      if (!isValidEmail(registerForm.email)) {
+        alert('Por favor, digite um email válido.');
+        return;
+      }
+      
+      if (!isValidPassword(registerForm.password)) {
+        alert('A senha deve ter pelo menos 6 caracteres.');
+        return;
+      }
+      
+      if (registerForm.password !== registerForm.confirmPassword) {
+        alert('As senhas não coincidem.');
+        return;
+      }
+
+      // AQUI seria a chamada para o Supabase - APENAS no submit
+      // const { data, error } = await supabase.auth.signUp({
+      //   email: registerForm.email,
+      //   password: registerForm.password,
+      //   options: { data: { name: registerForm.name } },
+      // });
+
+      // Simulação de cadastro por enquanto
+      localStorage.setItem('rushia_user', JSON.stringify({
+        nome: registerForm.name,
+        email: registerForm.email,
+        senha: registerForm.password,
+        plano: userPlan,
+        dataRegistro: new Date().toISOString()
+      }));
+
+      alert('Cadastro realizado com sucesso! Redirecionando para o pagamento...');
+      setCurrentView('payment');
+    };
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-white via-[#F8FFFE] to-[#E8F4FD] flex items-center justify-center px-4 pb-20 md:pb-0">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl max-w-md w-full border border-[#E8F4FD]">
+          <div className="text-center mb-6">
+            <div className="w-14 h-14 bg-gradient-to-br from-[#87CEEB] to-[#4682B4] rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <User className="w-7 h-7 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-[#2C3E50] mb-2">Criar Conta Rush.IA</h2>
+            <p className="text-[#6B7280] text-sm">
+              {userPlan === 'individual' ? 'Plano Individual selecionado' : 'Plano Completo selecionado'}
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[#2C3E50] mb-2">Senha *</label>
-            <div className="relative">
-              <SecureInput 
-                ref={senhaInputRef}
-                type={showPassword ? "text" : "password"}
-                value={userData.senha}
-                onValueChange={(value) => handleUserDataChange('senha', value)}
-                onCommit={(value) => processSecureData('senha', value)}
-                onValidate={isValidPassword}
-                placeholder="Mínimo 6 caracteres"
-                autoComplete="new-password"
-                className="pr-12"
+          <form onSubmit={handleRegisterSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-[#2C3E50] mb-2">Nome Completo *</label>
+              <input 
+                type="text"
+                name="name"
+                value={registerForm.name}
+                onChange={handleRegisterInputChange}
+                placeholder="Seu nome completo"
+                className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+                autoComplete="off"
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6B7280] hover:text-[#2C3E50] z-10"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-[#2C3E50] mb-2">Confirmar Senha *</label>
-            <div className="relative">
-              <SecureInput 
-                ref={confirmarSenhaInputRef}
-                type={showConfirmPassword ? "text" : "password"}
-                value={userData.confirmarSenha}
-                onValueChange={(value) => handleUserDataChange('confirmarSenha', value)}
-                onCommit={(value) => processSecureData('confirmarSenha', value)}
-                onValidate={(value) => value === userData.senha}
-                placeholder="Digite a senha novamente"
-                autoComplete="new-password"
-                className="pr-12"
+            
+            <div>
+              <label className="block text-sm font-medium text-[#2C3E50] mb-2">Email *</label>
+              <input 
+                type="email"
+                name="email"
+                value={registerForm.email}
+                onChange={handleRegisterInputChange}
+                placeholder="seu@email.com"
+                className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+                autoComplete="off"
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6B7280] hover:text-[#2C3E50] z-10"
-              >
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#2C3E50] mb-2">Senha *</label>
+              <div className="relative">
+                <input 
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={registerForm.password}
+                  onChange={handleRegisterInputChange}
+                  placeholder="Mínimo 6 caracteres"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+                  autoComplete="off"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6B7280] hover:text-[#2C3E50]"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#2C3E50] mb-2">Confirmar Senha *</label>
+              <div className="relative">
+                <input 
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={registerForm.confirmPassword}
+                  onChange={handleRegisterInputChange}
+                  placeholder="Digite a senha novamente"
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+                  autoComplete="off"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#6B7280] hover:text-[#2C3E50]"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <button 
+              type="submit"
+              className="w-full bg-gradient-to-r from-[#87CEEB] to-[#4682B4] text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+            >
+              Criar Conta e Continuar
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-xs text-[#6B7280] mb-3">
+              Já tem uma conta?
+            </p>
+            <button 
+              onClick={() => setCurrentView('login')}
+              className="text-[#4682B4] font-semibold text-sm hover:underline"
+            >
+              Fazer Login
+            </button>
           </div>
-
-          <button 
-            type="submit"
-            className="w-full bg-gradient-to-r from-[#87CEEB] to-[#4682B4] text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
-          >
-            Criar Conta e Continuar
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-xs text-[#6B7280] mb-3">
-            Já tem uma conta?
-          </p>
-          <button 
-            onClick={() => setCurrentView('login')}
-            className="text-[#4682B4] font-semibold text-sm hover:underline"
-          >
-            Fazer Login
-          </button>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
-  const LoginView = () => (
-    <div className="min-h-screen bg-gradient-to-br from-white via-[#F8FFFE] to-[#E8F4FD] flex items-center justify-center px-4 pb-20 md:pb-0">
-      <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl max-w-md w-full border border-[#E8F4FD]">
-        <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-gradient-to-br from-[#87CEEB] to-[#4682B4] rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <User className="w-7 h-7 text-white" />
+  const LoginView = () => {
+    // Estado local isolado para o formulário de login
+    const [loginForm, setLoginForm] = useState({
+      email: "",
+      password: "",
+    });
+
+    // Handler para mudanças nos inputs - sem dependências externas
+    const handleLoginInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setLoginForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    };
+
+    // Handler para submit do formulário - APENAS aqui o Supabase seria chamado
+    const handleLoginSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      // Validações locais
+      if (!isValidEmail(loginForm.email)) {
+        alert('Por favor, digite um email válido.');
+        return;
+      }
+      
+      if (!loginForm.password) {
+        alert('Por favor, digite sua senha.');
+        return;
+      }
+
+      // AQUI seria a chamada para o Supabase - APENAS no submit
+      // const { data, error } = await supabase.auth.signInWithPassword({
+      //   email: loginForm.email,
+      //   password: loginForm.password,
+      // });
+
+      // Simulação de login por enquanto
+      const storedUser = localStorage.getItem('rushia_user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        if (user.email === loginForm.email && user.senha === loginForm.password) {
+          setIsLoggedIn(true);
+          setUserPlan(user.plano);
+          setCurrentView('home');
+          alert(`Bem-vindo de volta, ${user.nome}!`);
+          return;
+        }
+      }
+      
+      alert('Email ou senha incorretos.');
+    };
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-white via-[#F8FFFE] to-[#E8F4FD] flex items-center justify-center px-4 pb-20 md:pb-0">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-xl max-w-md w-full border border-[#E8F4FD]">
+          <div className="text-center mb-6">
+            <div className="w-14 h-14 bg-gradient-to-br from-[#87CEEB] to-[#4682B4] rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <User className="w-7 h-7 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-[#2C3E50] mb-2">Bem-vindo de volta!</h2>
+            <p className="text-[#6B7280] text-sm">Entre com suas credenciais</p>
           </div>
-          <h2 className="text-2xl font-bold text-[#2C3E50] mb-2">Bem-vindo de volta!</h2>
-          <p className="text-[#6B7280] text-sm">Entre com suas credenciais</p>
-        </div>
 
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
-          <div>
-            <label className="block text-sm font-medium text-[#2C3E50] mb-2">Email</label>
-            <SecureInput 
-              ref={loginEmailRef}
-              type="email"
-              value={loginData.email}
-              onValueChange={(value) => handleLoginDataChange('email', value)}
-              onCommit={(value) => processSecureData('loginEmail', value)}
-              onValidate={isValidEmail}
-              placeholder="seu@email.com"
-              autoComplete="email"
-              required
-            />
+          <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-[#2C3E50] mb-2">Email</label>
+              <input 
+                type="email"
+                name="email"
+                value={loginForm.email}
+                onChange={handleLoginInputChange}
+                placeholder="seu@email.com"
+                className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+                autoComplete="off"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-[#2C3E50] mb-2">Senha</label>
+              <input 
+                type="password"
+                name="password"
+                value={loginForm.password}
+                onChange={handleLoginInputChange}
+                placeholder="••••••••"
+                className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
+                autoComplete="off"
+                required
+              />
+            </div>
+
+            <button 
+              type="submit"
+              className="w-full bg-gradient-to-r from-[#87CEEB] to-[#4682B4] text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+            >
+              Entrar na Rush.IA
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-xs text-[#6B7280] mb-3">
+              Ainda não tem acesso? Escolha seu plano:
+            </p>
+            <button 
+              onClick={() => setCurrentView('register')}
+              className="text-[#4682B4] font-semibold text-sm hover:underline"
+            >
+              Criar Conta Rush.IA
+            </button>
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-[#2C3E50] mb-2">Senha</label>
-            <SecureInput 
-              ref={loginSenhaRef}
-              type="password"
-              value={loginData.senha}
-              onValueChange={(value) => handleLoginDataChange('senha', value)}
-              onCommit={(value) => processSecureData('loginSenha', value)}
-              placeholder="••••••••"
-              autoComplete="current-password"
-              required
-            />
-          </div>
-
-          <button 
-            type="submit"
-            className="w-full bg-gradient-to-r from-[#87CEEB] to-[#4682B4] text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
-          >
-            Entrar na Rush.IA
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-xs text-[#6B7280] mb-3">
-            Ainda não tem acesso? Escolha seu plano:
-          </p>
-          <button 
-            onClick={() => setCurrentView('register')}
-            className="text-[#4682B4] font-semibold text-sm hover:underline"
-          >
-            Criar Conta Rush.IA
-          </button>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const SimuladosView = () => {
     if (showResult) {
@@ -1311,12 +1317,12 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
                 Qual tema você quer dominar hoje?
               </label>
               <div className="mb-4">
-                <SecureInput 
-                  ref={resumoInputRef}
+                <input 
+                  type="text"
                   value={resumoTema}
-                  onValueChange={handleResumoTemaChange}
-                  onCommit={(value) => processSecureData('resumoTema', value)}
+                  onChange={handleResumoTemaChange}
                   placeholder="Ex: Revolução Francesa, Funções Quadráticas, Genética..."
+                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
                 />
               </div>
 
@@ -1545,11 +1551,12 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
                 <label className="block text-sm font-medium text-[#2C3E50] mb-2">
                   4. Quais são suas matérias preferidas?
                 </label>
-                <SecureInput 
+                <input 
+                  type="text"
                   value={plannerData.materiasPreferidas}
-                  onValueChange={(value) => handlePlannerDataChange('materiasPreferidas', value)}
-                  onCommit={(value) => processSecureData('materiasPreferidas', value)}
+                  onChange={(e) => handlePlannerDataChange('materiasPreferidas', e.target.value)}
                   placeholder="Ex: Matemática, História, Português..."
+                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors bg-white"
                 />
               </div>
 
@@ -1557,11 +1564,10 @@ O sucesso na abordagem deste tema contribui significativamente para o desempenho
                 <label className="block text-sm font-medium text-[#2C3E50] mb-2">
                   5. Quais são suas maiores dificuldades?
                 </label>
-                <SecureTextarea 
+                <textarea 
                   value={plannerData.dificuldades}
-                  onValueChange={(value) => handlePlannerDataChange('dificuldades', value)}
-                  onCommit={(value) => processSecureData('dificuldades', value)}
-                  className="h-20"
+                  onChange={(e) => handlePlannerDataChange('dificuldades', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-[#E8F4FD] focus:border-[#87CEEB] focus:outline-none transition-colors resize-none bg-white h-20"
                   placeholder="Ex: Física, Redação, Interpretação de texto..."
                 />
               </div>
