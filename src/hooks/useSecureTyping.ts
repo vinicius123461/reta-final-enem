@@ -3,8 +3,8 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 export const useSecureTyping = (initialValue: string = '') => {
   const [value, setValue] = useState(initialValue);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
-
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setValue(newValue);
